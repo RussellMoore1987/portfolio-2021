@@ -20,6 +20,21 @@
 // @ run migration
     // php artisan migrate
 
+    // make 
+        // php artisan make:migration create_projects_table --create
+        // php artisan make:migration create_case_studies_table --create
+        // php artisan make:migration create_categories_table --create
+        // php artisan make:migration create_tags_table --create
+        // php artisan make:migration create_skills_table --create
+        // php artisan make:migration create_skill_types_table --create
+        // php artisan make:migration create_work_history_table --create
+        // php artisan make:migration create_work_history_type_table --create
+        // php artisan make:migration create_post_table --create
+        // php artisan make:migration create_experience_table --create
+        // php artisan make:migration create_content_table --create
+        // php artisan make:migration create_images_table --create
+        // php artisan make:migration create_connection_table --create
+
     // place holder
         // php artisan migrate:fresh
 
@@ -326,3 +341,10 @@
             // });
             // $Projects->count(); // 23
             // gives back completed_at = null
+
+// Problems solved
+    // TODO: get link and error message********
+    // Schema::defaultStringLength(191);
+
+    // Cannot declare class CreateWorkHistoryTypesTable, because the name is already in use laravel 2021
+        // ? https://stackoverflow.com/questions/54765710/error-migrations-cannot-declare-class-x-because-the-name-is-already-in-use/54765856
