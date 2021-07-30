@@ -26,14 +26,6 @@
         // php artisan make:migration create_categories_table --create
         // php artisan make:migration create_tags_table --create
         // php artisan make:migration create_skills_table --create
-        // php artisan make:migration create_skill_types_table --create
-        // php artisan make:migration create_work_history_table --create
-        // php artisan make:migration create_work_history_type_table --create
-        // php artisan make:migration create_post_table --create
-        // php artisan make:migration create_experience_table --create
-        // php artisan make:migration create_content_table --create
-        // php artisan make:migration create_images_table --create
-        // php artisan make:migration create_connection_table --create
 
     // place holder
         // php artisan migrate:fresh

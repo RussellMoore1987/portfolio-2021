@@ -15,7 +15,7 @@ class CreateWorkHistoryTypesTable extends Migration
     {
         Schema::create('work_history_types', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 35);
+            $table->string('name', 35)->unique();
             $table->string('icon', 50)->nullable();
             $table->timestamps();
         });

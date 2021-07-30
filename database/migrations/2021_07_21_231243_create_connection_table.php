@@ -18,8 +18,8 @@ class CreateConnectionTable extends Migration
             $table->foreignId('tag_id');
 
             $table->primary(['project_id', 'tag_id']);
-            $table->foreign('project_id')->references('id')->on('projects');
-            $table->foreign('tag_id')->references('id')->on('tags');
+            $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
+            $table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
         });
 
         Schema::create('category_project', function (Blueprint $table) {
@@ -27,8 +27,8 @@ class CreateConnectionTable extends Migration
             $table->foreignId('category_id');
 
             $table->primary(['project_id', 'category_id']);
-            $table->foreign('project_id')->references('id')->on('projects');
-            $table->foreign('category_id')->references('id')->on('categories');
+            $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
+            $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
         });
 
         Schema::create('image_project', function (Blueprint $table) {
@@ -38,8 +38,8 @@ class CreateConnectionTable extends Migration
             $table->tinyInteger('sort_order')->default(100);
 
             $table->primary(['project_id', 'image_id']);
-            $table->foreign('project_id')->references('id')->on('projects');
-            $table->foreign('image_id')->references('id')->on('images');
+            $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
+            $table->foreign('image_id')->references('id')->on('images')->onDelete('cascade');
         });
 
         Schema::create('case_study_tag', function (Blueprint $table) {
@@ -47,8 +47,8 @@ class CreateConnectionTable extends Migration
             $table->foreignId('tag_id');
 
             $table->primary(['case_study_id', 'tag_id']);
-            $table->foreign('case_study_id')->references('id')->on('case_studies');
-            $table->foreign('tag_id')->references('id')->on('tags');
+            $table->foreign('case_study_id')->references('id')->on('case_studies')->onDelete('cascade');
+            $table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
         });
 
         Schema::create('case_study_category', function (Blueprint $table) {
@@ -56,8 +56,8 @@ class CreateConnectionTable extends Migration
             $table->foreignId('category_id');
 
             $table->primary(['case_study_id', 'category_id']);
-            $table->foreign('case_study_id')->references('id')->on('case_studies');
-            $table->foreign('category_id')->references('id')->on('categories');
+            $table->foreign('case_study_id')->references('id')->on('case_studies')->onDelete('cascade');
+            $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
         });
 
         Schema::create('case_study_image', function (Blueprint $table) {
@@ -67,8 +67,8 @@ class CreateConnectionTable extends Migration
             $table->tinyInteger('sort_order')->default(100);
 
             $table->primary(['case_study_id', 'image_id']);
-            $table->foreign('case_study_id')->references('id')->on('case_studies');
-            $table->foreign('image_id')->references('id')->on('images');
+            $table->foreign('case_study_id')->references('id')->on('case_studies')->onDelete('cascade');
+            $table->foreign('image_id')->references('id')->on('images')->onDelete('cascade');
         });
 
         Schema::create('post_tag', function (Blueprint $table) {
@@ -76,8 +76,8 @@ class CreateConnectionTable extends Migration
             $table->foreignId('tag_id');
 
             $table->primary(['post_id', 'tag_id']);
-            $table->foreign('post_id')->references('id')->on('posts');
-            $table->foreign('tag_id')->references('id')->on('tags');
+            $table->foreign('post_id')->references('id')->on('posts')->onDelete('cascade');
+            $table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
         });
 
         Schema::create('category_post', function (Blueprint $table) {
@@ -85,8 +85,8 @@ class CreateConnectionTable extends Migration
             $table->foreignId('category_id');
 
             $table->primary(['post_id', 'category_id']);
-            $table->foreign('post_id')->references('id')->on('posts');
-            $table->foreign('category_id')->references('id')->on('categories');
+            $table->foreign('post_id')->references('id')->on('posts')->onDelete('cascade');
+            $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
         });
 
         Schema::create('image_post', function (Blueprint $table) {
@@ -96,8 +96,8 @@ class CreateConnectionTable extends Migration
             $table->tinyInteger('sort_order')->default(100);
 
             $table->primary(['post_id', 'image_id']);
-            $table->foreign('post_id')->references('id')->on('posts');
-            $table->foreign('image_id')->references('id')->on('images');
+            $table->foreign('post_id')->references('id')->on('posts')->onDelete('cascade');
+            $table->foreign('image_id')->references('id')->on('images')->onDelete('cascade');
         });
     }
 

@@ -15,7 +15,7 @@ class CreateSkillsTable extends Migration
     {
         Schema::create('skills', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 35);
+            $table->string('name', 35)->unique();
             $table->string('icon', 50);
             $table->foreignId('skill_type_id');
             $table->foreignId('tag_id')->nullable();
