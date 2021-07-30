@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
+        // TODO:  add resources*** table
         $caseStudies = \App\Models\CaseStudy::factory(50)->create();
         $projects = \App\Models\Project::factory(50)->create();
         $content = \App\Models\Content::factory(50)->create();
@@ -37,19 +38,70 @@ class DatabaseSeeder extends Seeder
         });
         
         // Connection tables / pivot tables
-        $caseStudies->each(function ($caseStudy) use ($images) { 
+        $caseStudies->each(function ($caseStudy) use ($images, $tags, $categories) { 
             $caseStudy->images()->attach(
-                $images->random(rand(1, 5))->pluck('id')->toArray(),
+                $images->random(rand(2, 5))->pluck('id')->toArray(),
                 ['sort_order' => rand(1, 100)]
             ); 
 
-            // set featured image
-            // ! start Here ************************************************************** also add resources*** table
-            // $review->product()->detach()
-            // caseStudy->images->find($caseStudy->images[0]->id);
-            $caseStudy->images()->sync([$caseStudy->images[0]->id], ['is_featured_img' => 1, 'sort_order' => 1]);
-            // $caseStudy->images()->random()->is_featured();
-            // dd($caseStudy->images[0]->is_featured());
+            $caseStudy->tags()->attach(
+                $tags->random(rand(2, 6))->pluck('id')->toArray()
+            ); 
+
+            $caseStudy->categories()->attach(
+                $categories->random(rand(2, 6))->pluck('id')->toArray()
+            ); 
+
+            // set featured image // TODO: Turn this into a function
+            $imageId = $caseStudy->images[0]->id;
+            $caseStudy->images()->updateExistingPivot($imageId, [
+                'is_featured_img' => 1,
+                'sort_order' => 1
+            ]);
+        });
+
+        $projects->each(function ($project) use ($images, $tags, $categories) { 
+            $project->images()->attach(
+                $images->random(rand(2, 5))->pluck('id')->toArray(),
+                ['sort_order' => rand(1, 100)]
+            ); 
+
+            $project->tags()->attach(
+                $tags->random(rand(2, 6))->pluck('id')->toArray()
+            ); 
+
+            $project->categories()->attach(
+                $categories->random(rand(2, 6))->pluck('id')->toArray()
+            ); 
+
+            // set featured image // TODO: Turn this into a function
+            $imageId = $project->images[0]->id;
+            $project->images()->updateExistingPivot($imageId, [
+                'is_featured_img' => 1,
+                'sort_order' => 1
+            ]);
+        });
+
+        $posts->each(function ($post) use ($images, $tags, $categories) { 
+            $post->images()->attach(
+                $images->random(rand(2, 5))->pluck('id')->toArray(),
+                ['sort_order' => rand(1, 100)]
+            ); 
+
+            $post->tags()->attach(
+                $tags->random(rand(2, 6))->pluck('id')->toArray()
+            ); 
+
+            $post->categories()->attach(
+                $categories->random(rand(2, 6))->pluck('id')->toArray()
+            ); 
+
+            // set featured image // TODO: Turn this into a function
+            $imageId = $post->images[0]->id;
+            $post->images()->updateExistingPivot($imageId, [
+                'is_featured_img' => 1,
+                'sort_order' => 1
+            ]);
         });
     }
 }
