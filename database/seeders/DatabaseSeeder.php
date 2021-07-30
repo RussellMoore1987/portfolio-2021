@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
         $experiences = \App\Models\Experience::factory(10)->create();
         $images = \App\Models\Image::factory(100)->create();
         $posts = \App\Models\Post::factory(100)->create();
+        $resources = \App\Models\Resource::factory(100)->create();
         $categories = \App\Models\Category::factory(20)->create();
         $tags = \App\Models\Tag::factory(30)->create();
         $skillTypes = \App\Models\SkillType::factory(2)->create();
@@ -52,12 +53,7 @@ class DatabaseSeeder extends Seeder
                 $categories->random(rand(2, 6))->pluck('id')->toArray()
             ); 
 
-            // set featured image // TODO: Turn this into a function
-            $imageId = $caseStudy->images[0]->id;
-            $caseStudy->images()->updateExistingPivot($imageId, [
-                'is_featured_img' => 1,
-                'sort_order' => 1
-            ]);
+            $caseStudy->setFeaturedImage($caseStudy->images[0]);
         });
 
         $projects->each(function ($project) use ($images, $tags, $categories) { 
@@ -74,12 +70,7 @@ class DatabaseSeeder extends Seeder
                 $categories->random(rand(2, 6))->pluck('id')->toArray()
             ); 
 
-            // set featured image // TODO: Turn this into a function
-            $imageId = $project->images[0]->id;
-            $project->images()->updateExistingPivot($imageId, [
-                'is_featured_img' => 1,
-                'sort_order' => 1
-            ]);
+            $project->setFeaturedImage($project->images[0]);
         });
 
         $posts->each(function ($post) use ($images, $tags, $categories) { 
@@ -96,12 +87,24 @@ class DatabaseSeeder extends Seeder
                 $categories->random(rand(2, 6))->pluck('id')->toArray()
             ); 
 
-            // set featured image // TODO: Turn this into a function
-            $imageId = $post->images[0]->id;
-            $post->images()->updateExistingPivot($imageId, [
-                'is_featured_img' => 1,
-                'sort_order' => 1
-            ]);
+            $post->setFeaturedImage($post->images[0]);
+        });
+
+        $resources->each(function ($resource) use ($images, $tags, $categories) { 
+            $resource->images()->attach(
+                $images->random(rand(2, 5))->pluck('id')->toArray(),
+                ['sort_order' => rand(1, 100)]
+            ); 
+
+            $resource->tags()->attach(
+                $tags->random(rand(2, 6))->pluck('id')->toArray()
+            ); 
+
+            $resource->categories()->attach(
+                $categories->random(rand(2, 6))->pluck('id')->toArray()
+            ); 
+
+            $resource->setFeaturedImage($resource->images[0]);
         });
     }
 }

@@ -28,4 +28,17 @@ class Image extends Model
     {
         return $this->belongsToMany(Post::class);
     }
+
+    public function isFeaturedImage(Model $class)
+    {
+        $class->unSetFeaturedImage();
+        
+        $class->images()->updateExistingPivot($this, [
+            'is_featured_img' => 1,
+            'sort_order' => 1
+        ]);
+        
+        return true;
+        // ex call $image->isFeaturedImage($caseStudy);
+    }
 }

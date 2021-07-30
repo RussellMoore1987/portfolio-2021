@@ -5,6 +5,18 @@
     // php artisan serve
     // http://localhost:8000/
 
+// @ Run Tests Laravel 
+    // php artisan test
+    // vendor/bin/phpunit // dose not work in work interment with out
+        // docker-compose exec practice-app bash
+    // vendor/bin/phpunit -h
+        // help info
+
+    // To create a new test case, use the make:test Artisan command. By default, tests will be placed in the tests/Feature directory:
+        // php artisan make:test UserTest
+    // If you would like to create a test within the tests/Unit directory
+        // php artisan make:test UserTest --unit
+
 // @ list of routes
     // php artisan route:list
 
@@ -26,6 +38,14 @@
         // php artisan make:migration create_categories_table --create
         // php artisan make:migration create_tags_table --create
         // php artisan make:migration create_skills_table --create
+        // php artisan make:migration create_skill_types_table --create
+        // php artisan make:migration create_work_history_table --create
+        // php artisan make:migration create_work_history_type_table --create
+        // php artisan make:migration create_post_table --create
+        // php artisan make:migration create_experience_table --create
+        // php artisan make:migration create_content_table --create
+        // php artisan make:migration create_images_table --create
+        // php artisan make:migration create_connection_table --create
 
     // place holder
         // php artisan migrate:fresh
@@ -122,6 +142,9 @@
         // App\Models\Project::findOrFail(52); // by id or fail
         // $Project = Project::where('completed_at', null)->firstOrFail();
         // App\Models\Project::all();
+        // App\Models\Project::with('tasks'); // gives sub set data in same result set
+        // App\Models\Payee::with(["paystubs" => function($query){$query->with(["line_items"]);}])->get(); // payee, pay stubs, and pay stub line items
+        // $CaseStudies = App\Models\CaseStudy::with(['tags','categories','images'])->get();
         // App\Models\Project::first();
         // App\Models\Project::where('completed_at', null)->get();
         // $Project = App\Models\Project::where('completed_at', null)->first();
@@ -334,9 +357,70 @@
             // $Projects->count(); // 23
             // gives back completed_at = null
 
-// Problems solved
+// @ Laravel project, it's fresh start - work Fox
+    // Run the docker-compose build command from the root directory
+    // Then run the docker-compose up command to bring the docker containers up
+    // Navigate to the application page by going to http://localhost:8000/
+    // You may bring up the terminal for the docker container to execute commands by using this command: docker-compose exec practice-app bash
+        // docker-compose exec practice-app bash
+        // php artisan
+    // composer install
+    // msql = docker-compose exec practice-mysql bash
+
+
+    // docker-compose build
+    // docker-compose up
+    // http://localhost:8000/
+
+    // docker-compose exec practice-app bash
+    // php artisan
+
+    // docker-compose exec practice-mysql bash
+
+    // php artisan migrate:fresh
+
+    // * Work Prosses
+        // docker-compose build // * if docker file changed
+            // docker-compose up 
+        // docker-compose down -v // wipes all the docker volumes 
+            // docker-compose up 
+        // docker-compose up // bring environment up
+        // http://localhost:8000/
+
+        // docker-compose exec practice-app bash // remotes me in to the container
+            // php artisan
+        // docker-compose exec practice-mysql bash // mysql container 
+
+        // php artisan migrate:fresh
+        // php artisan migrate:fresh --seed
+        // php artisan db:seed
+
+        // Branching / Example Branching and Merging
+            // v1.12.0/v1.12.0
+            // PA-987
+
+            // Branched off of:
+            // v1.12.0/v1.12.0 => v1.12.0/PA-987
+
+            // Before Pull Request OR QA:
+            // Merge
+            // v1.12.0/v1.12.0 => v1.12.0/PA-987
+
+            // Pull Request Approved/Merge
+            // v1.12.0/PA-987 => v1.12.0/v1.12.0
+        
+        // * compile web packet and changes sass, JavaScript, css
+            // npm run watch 
+            // npm run dev (or) npm run prod
+
+
+ // @ Problems
     // TODO: get link and error message********
     // Schema::defaultStringLength(191);
 
     // Cannot declare class CreateWorkHistoryTypesTable, because the name is already in use laravel 2021
         // ? https://stackoverflow.com/questions/54765710/error-migrations-cannot-declare-class-x-because-the-name-is-already-in-use/54765856
+   
+    // Something else connected to MySQL not allowing me to run the docker
+        // Solution
+            // Went to services and stopped wampmysql64

@@ -99,6 +99,35 @@ class CreateConnectionTable extends Migration
             $table->foreign('post_id')->references('id')->on('posts')->onDelete('cascade');
             $table->foreign('image_id')->references('id')->on('images')->onDelete('cascade');
         });
+
+        Schema::create('resource_tag', function (Blueprint $table) {
+            $table->foreignId('resource_id');
+            $table->foreignId('tag_id');
+
+            $table->primary(['resource_id', 'tag_id']);
+            $table->foreign('resource_id')->references('id')->on('resources')->onDelete('cascade');
+            $table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
+        });
+
+        Schema::create('category_resource', function (Blueprint $table) {
+            $table->foreignId('resource_id');
+            $table->foreignId('category_id');
+
+            $table->primary(['resource_id', 'category_id']);
+            $table->foreign('resource_id')->references('id')->on('resources')->onDelete('cascade');
+            $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
+        });
+
+        Schema::create('image_resource', function (Blueprint $table) {
+            $table->foreignId('resource_id');
+            $table->foreignId('image_id');
+            $table->tinyInteger('is_featured_img')->default(0);
+            $table->tinyInteger('sort_order')->default(100);
+
+            $table->primary(['resource_id', 'image_id']);
+            $table->foreign('resource_id')->references('id')->on('resources')->onDelete('cascade');
+            $table->foreign('image_id')->references('id')->on('images')->onDelete('cascade');
+        });
     }
 
     /**

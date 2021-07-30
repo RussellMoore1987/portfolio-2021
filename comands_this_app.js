@@ -11,6 +11,7 @@
     // php artisan make:migration create_experience_table --create
     // php artisan make:migration create_content_table --create
     // php artisan make:migration create_images_table --create
+    // php artisan make:migration create_resources_table --create
     // php artisan make:migration create_connection_table --create
 // make model
     // php artisan make:model Project
@@ -25,6 +26,7 @@
     // php artisan make:model Experience
     // php artisan make:model Content
     // php artisan make:model Image
+    // php artisan make:model Resource
 // make factory
     // php artisan make:factory ProjectFactory --model=Project
     // php artisan make:factory CaseStudyFactory --model=CaseStudy
@@ -38,9 +40,7 @@
     // php artisan make:factory ExperienceFactory --model=Experience
     // php artisan make:factory ContentFactory --model=Content
     // php artisan make:factory ImageFactory --model=Image
-    
-    
-    
+    // php artisan make:factory ResourceFactory --model=Resource
     
     
 
