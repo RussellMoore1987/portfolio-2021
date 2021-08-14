@@ -146,5 +146,8 @@ class CreateConnectionTable extends Migration
         Schema::dropIfExists('post_tag');
         Schema::dropIfExists('category_post');
         Schema::dropIfExists('image_post');
+        Schema::dropIfExists('resource_tag');
+        Schema::dropIfExists('category_resource');
+        Schema::dropIfExists('image_resource');
     }
 }

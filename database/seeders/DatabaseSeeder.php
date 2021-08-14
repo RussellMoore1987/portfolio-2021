@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // TODO:  add resources*** table
+        $caseStudies = \App\Models\User::factory(3)->create();
         $caseStudies = \App\Models\CaseStudy::factory(50)->create();
         $projects = \App\Models\Project::factory(50)->create();
         $content = \App\Models\Content::factory(50)->create();

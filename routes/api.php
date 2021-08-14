@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GlobalAPIController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,3 +18,9 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::any("v1/{class}/{id?}/{subRequest?}/{subId?}/{otherInfo?}", [GlobalAPIController::class, 'processRequest'])->where('otherInfo', '.+');
+
+// Route::any("api/v1/{class}/{path?}", [GlobalAPIController::class, 'parseRequest'])->where('path', '.+');
+
+
