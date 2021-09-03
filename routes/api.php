@@ -19,7 +19,8 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::any("v1/{class}/{id?}/{subRequest?}/{subId?}/{otherInfo?}", [GlobalAPIController::class, 'processRequest'])->where('otherInfo', '.+');
+Route::any("v1/{class}/{id?}", [GlobalAPIController::class, 'processRequest']);
+// Route::any("v1/{class}/{id?}/{subRequest?}/{subId?}/{otherInfo?}", [GlobalAPIController::class, 'processRequest'])->where('otherInfo', '.+');
 
 // Route::any("api/v1/{class}/{path?}", [GlobalAPIController::class, 'parseRequest'])->where('path', '.+');
 

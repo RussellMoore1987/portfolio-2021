@@ -2,12 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use PhpParser\Builder\Param;
-
 
 // Список Дел:
     // test all items coming back from responseWrapper (feature testing)
@@ -16,36 +12,44 @@ use PhpParser\Builder\Param;
         // Generic for common use
         // Specific for application
 
+        // simple
+            // relationships - with - include
+            // select
+            // save
+
+    // to add 
+    // includesAccepted
+    // includesRejected
+    // paramsAccepted
+    // paramsRejected
+// Список Дел eventually: 
+    // nesting relationships
+    // select statement
+
+
 class GlobalAPIController extends Controller
 {
 
-    private $endpointKeyToApplyQueryParametersOn;
-    public $acceptableParameters = [];
-    private $class;
-    private $classId;
-    private $subRequest;
-    private $subRequestId;
-    private $endpointKey;
-    public $httpMethod;
-    public $endpoint;
-    private $statusCode;
-    private $request;
+    protected $acceptableParameters = [];
+    protected $defaultAcceptableParameters = ['perPage', 'page', 'orderBy'];
+    protected $class;
+    protected $endpointKey;
+    protected $classId;
+    protected $statusCode;
+    protected $indexUrlPath;
     
-    private $includes = [];
-    private $includedMethods = [];
-    private $method;
-    public $paramsAccepted  = [];
-    public $paramsRejected = [];
-    private $currentPage;
-    private $totalPages;
-    private $requestPerPage;
-    private $totalResults;
-    private $url;
+    protected $includes = [];
+    protected $paramsAccepted  = [];
+    protected $paramsRejected = [];
+    protected $includesAccepted  = [];
+    protected $includesRejected  = [];
+    protected $defaultPerPage = 30;
+    protected $query;
+    protected $currentParameter;
+    protected $currentParameterType;
 
-    private $query;
-    private $results;
-    private $errors = [];
-    private $message = [];
+    protected $errors = [];
+    protected $message = [];
 
     public $acceptedClasses = [
         'caseStudies' => "App\Models\CaseStudy",
@@ -63,46 +67,72 @@ class GlobalAPIController extends Controller
         'workHistory' => "App\Models\WorkHistory"
     ];
 
-    public function processRequest($endpointKey, $endpointKeyId = null, $subEndpointKey = null, $subEndpointKeyId = null, $otherInfo = null, Request $request){
+    public function processRequest($endpointKey = null, $classId = null, Request $request){
 
-        // # validate token or key - done by laravel!
         // Initial set up of key variables
-        $this->endpointKeyToApplyQueryParametersOn = $subEndpointKey ?? $endpointKey;
         $this->endpointKey = $endpointKey;
-        $this->endpointKeyId = $endpointKeyId;
-        $this->subEndpointKey = $subEndpointKey;
-        $this->subEndpointKeyId = $subEndpointKeyId;
-        // validate has class
-        // validate subclass
+        $this->classId = $classId;
+        $this->indexUrlPath = substr($request->url(), 0, strpos($request->url(), "api"));
         
-        // validate has permission to access class
-        if(!$this->validateRequest()){ // ???
-            return $this->responseWrapper();
+        // TODO:
+        if ($this->endpointKey === null) {
+            return $this->indexPage();
         }
-        
-        $this->class = $this->acceptedClasses[$this->endpointKey];
-        $this->endpoint = $request->path();
-        $this->url = $request->url();
-        $this->request = $request;
-        $this->path = request()->path;
-        $this->httpMethod = $_SERVER['REQUEST_METHOD'] ?? request()->method() ?? null;
-        // Getting acceptable parameters
-        $tempClass = new $this->class();
-        $classTableName = $tempClass->gettable();
-        $columnData = $this->arrayOfObjectsToArrayOfArrays(DB::select("SHOW COLUMNS FROM {$classTableName}"));
-        $this->setAcceptableParameters($columnData);
-        $this->initialProcessOfAllParameters(request()->all(), $this->acceptableParameters);
 
+        if(!$this->validateMainEndpoint()){
+            return response()->json([
+                'Message' => "'{$this->endpointKey}' is not a valid API endpoint. Please view the documentation at {$this->indexUrlPath} for all available endpoints."
+            ], 404);
+        }
+
+        $this->checkForIncludes($request->includes);
+
+        $columnData = $this->getAcceptableParameters();
+        $this->setAcceptableParameters($columnData);
+        $this->initialProcessOfAllParameters($request->all(), $this->acceptableParameters);
+
+        // # which HTTP method
         if ($this->isGetRequest()){
             $this->getRequest();
         }else{
+            // # POST, PUT, PATCH, DELETE
             $this->postRequest();
         }
-
-        return $this->responseWrapper();
     }
 
-    public function arrayOfObjectsToArrayOfArrays(array $arrayOfObjects)
+    protected function validateMainEndpoint() {
+        if(array_key_exists($this->endpointKey, $this->acceptedClasses)){
+            $this->class = $this->acceptedClasses[$this->endpointKey];
+            return true;
+        }
+        return false;
+    }
+
+    protected function checkForIncludes($includes = '')
+    {
+        if ($includes) {
+            $includes = explode(',', $includes);
+            foreach ($includes as $relationship) {
+                if($this->isRelationship($this->class, $relationship)) {
+                    $this->includes[] = $relationship;
+                    $this->includesAccepted[$relationship] = 'Include Accepted';
+                } else {
+                    $this->includesRejected[$relationship] = 'Include Not Accepted, not a valid relationship';
+                }
+            }
+        }
+    }
+
+    protected function getAcceptableParameters()
+    {
+        $tempClass = new $this->class();
+        $classTableName = $tempClass->gettable();
+        $columnData = $this->arrayOfObjectsToArrayOfArrays(DB::select("SHOW COLUMNS FROM {$classTableName}"));
+        
+        return $columnData;
+    }
+
+    protected function arrayOfObjectsToArrayOfArrays(array $arrayOfObjects)
     {
         foreach ($arrayOfObjects as $object) {
             $arrayOfArrays[] = (array) $object;
@@ -111,54 +141,31 @@ class GlobalAPIController extends Controller
         return $arrayOfArrays;
     }
 
-    public function initialProcessOfAllParameters(array $incomingParameters, array $acceptableParameters)
+    protected function setAcceptableParameters(array $classDBData)
     {
-        $defaultAcceptableParameters = ['perPage', 'page', 'orderBy'];
+        foreach ($classDBData as $columnArray) {
+            foreach ($columnArray as $column_data_name => $value) {
+                $column_data_name = strtolower($column_data_name);
+                $value = $value === Null ? $value : strtolower($value);
 
-        foreach ($incomingParameters as $key => $value) {
-            if (array_key_exists($key, $acceptableParameters) || in_array($key, $defaultAcceptableParameters)) {
-                $this->paramsAccepted[$key] = $value;
+                $this->acceptableParameters[$columnArray['Field']][$column_data_name] = $value; 
+            }
+        }
+    }
+
+    protected function initialProcessOfAllParameters(array $incomingParameters, array $acceptableParameters)
+    {
+        foreach ($incomingParameters as $parameterName => $parameterValue) {
+            if (array_key_exists($parameterName, $acceptableParameters) || in_array($parameterName, $this->defaultAcceptableParameters)) {
+                $this->paramsAccepted[$parameterName] = $parameterValue;
             } else {
-                $this->paramsRejected[$key] = $value;
+                $this->paramsRejected[$parameterName] = $parameterValue;
             } 
         }
         
     }
 
-    public function setAcceptableParameters(array $classDBData)
-    {
-        foreach ($classDBData as $columnArray) {
-            foreach ($columnArray as $key => $value) {
-                $this->acceptableParameters[$columnArray['Field']][$key] = $value; 
-            }
-        }
-    }
-
-    private function validateRequest(){
-        $isValid = true;
-
-        $this->validateClass() ? null : $isValid = false;
-        // $isValid == false || $this->validateHttpMethod() ? null : $isValid = false;
-
-        return $isValid;
-    }
-
-    private function validateClass() {
-        if(array_key_exists($this->endpointKeyToApplyQueryParametersOn, $this->acceptedClasses)){
-            return true;
-        }
-        $this->results = "'{$this->endpointKey}' is not a valid API path. Please view the documentation at {$this->url}.";
-        $this->errors['statusMessage'] = 'Endpoint not found';
-        $this->errors['errorMessage'] = "{$this->endpointKey} path not found";
-        $this->statusCode = 404;
-        return false;
-    }
-
-    // private function validateHttpMethod(){
-    //     return true;
-    // }
-
-    private function isGetRequest(){
+    protected function isGetRequest(){
         if ($this->httpMethod == 'GET'){
             return true;
         }else{
@@ -166,63 +173,90 @@ class GlobalAPIController extends Controller
         }
     }
 
-    private function getRequest(){
-
-        if(request('call')){
-            $call = request('call');
-
-            if(key_exists($call, $this->class::$api_get['calls'])){
-                $this->results[] = $this->class::$call();
-                $this->totalResults = count($this->results);
-                return;
-            }
-            $this->results = "'{$this->httpMethod}' is not an accepted call. Please view the documentation at {$this->url}.";
-            $this->errors['statusMessage'] = 'Bad Request';
-            $this->errors['errorMessage'] = "{$call} not valid";
-            return;
+    protected function getRequest(){
+        
+        if ($this->includes || $this->paramsAccepted) {
+            return response()->json([$this->queryBuilder()], 200); 
+        } else {
+            return response()->json([$this->class::paginate($this->defaultPerPage)], 200);
         }
 
-        if(request('include')) {
-            $relationship = request('include');
-
-            if(!$this->isRelationship($this->class, $relationship)) {
-                $this->results = "'{$relationship}' is not in relation to {$this->endpointKey}. Please view the documentation at {$this->url}.";
-                $this->errors['statusMessage'] = 'Bad Request';
-                $this->errors['errorMessage'] = "{$relationship} not related to {$this->endpointKey}";
-
-                return;
-            }
-
-            $model_data = $this->class::all();
-
-            foreach ($model_data as $item) {
-                $item->$relationship = $item->$relationship()->get();
-                $this->results[] = $item;
-            }
-            $this->totalResults = count($this->results);
-            return;
-        }
-
-        $perPage = (int) $perPage = is_numeric(request()->perPage) ? request()->perPage : 15; // @ New
-        $this->results = $this->class::paginate($perPage)->appends([
-            'perPage' => $perPage // TODO: need to make dynamic, only included it if we use it
-        ]); // @ New
-        // * $this->results = $this->class::all();
-        $this->totalResults = count($this->results);
-        return;
+        // $perPage = (int) $perPage = is_numeric(request()->perPage) ? request()->perPage : 15; // @ New
+        // $this->results = $this->mainClass::paginate($perPage)->appends([
+        //     'perPage' => $perPage // TODO: need to make dynamic, only included it if we use it
+        // ]); // @ New
     }
 
-    private function isRelationship($class, $relationship) {
+    protected function queryBuilder()
+    {
+
+        if ($this->includes) {
+            $this->query = $this->class::with($this->includes);
+        }
+
+        foreach ($this->paramsAccepted as $parameter => $value) {
+            if (in_array($parameter, $this->defaultAcceptableParameters)) {
+                $this->processDefaultParameter($parameter, $value);
+            }
+            $this->currentParameter = [$parameter => $value];
+            $this->currentParameterType = $this->determineParameterType($this->acceptableParameters[$parameter]['Type']); 
+            $this->processParameter();
+        }
+
+        if ($this->query === null) {
+            return $this->class::paginate($this->getPerPage());
+        }
+
+        return $this->query->paginate($this->getPerPage())->appends($this->paramsAccepted);;
+    }
+
+    protected function processDefaultParameter($parameter, $value)
+    {
+        if ($parameter === 'perPage') {
+            $this->perPage = is_numeric(request()->perPage) ? (int) request()->perPage : $this->defaultPerPage;
+        } elseif ($parameter === 'orderBy') {
+            $orderByColumns = explode(',', $value);
+            foreach ($orderByColumns as $orderByColumn) {
+                if (str_contains($orderByColumn, '::')) {
+                    $orderByColumnAndOrderIndicator = explode('::', $orderByColumn);
+                    if (array_key_exists($orderByColumnAndOrderIndicator[0], $acceptableParameters) {
+
+                    }
+                } else {
+                    if (array_key_exists($orderByColumn, $acceptableParameters) {
+
+                    }
+                }
+            }
+            // orderBy('start_date')
+            // orderByDesc('start_date')
+            // inRandomOrder()
+        }
+        // $parameter === page is handed by Laravel
+    }
+
+
+    protected function determineParameterType()
+    {
+       switch ($this->currentParameterType) {
+           case 'date': $this->dateQueryBuilder(); break;
+           case 'string': $this->stringQueryBuilder(); break;
+           case 'int': $this->intQueryBuilder(); break;
+           case 'bool': $this->boolQueryBuilder(); break;
+       }
+    }
+
+    protected function isRelationship($class, $relationship) {
         return method_exists($class, $relationship);
     }
 
-    private function postRequest(){
+    protected function postRequest(){
         $this->results = "'{$this->httpMethod}' is not an accepted method. Please view the documentation at {$this->url}.";
         $this->errors['statusMessage'] = 'Bad Request';
         $this->errors['errorMessage'] = "{$this->httpMethod} not valid";
     }
 
-    private function responseWrapper(){
+    protected function responseBuilder(){
 
         // * constructing wrapper
 
