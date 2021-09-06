@@ -156,13 +156,33 @@ class GlobalAPIController extends Controller
     protected function initialProcessOfAllParameters(array $incomingParameters, array $acceptableParameters)
     {
         foreach ($incomingParameters as $parameterName => $parameterValue) {
-            if (array_key_exists($parameterName, $acceptableParameters) || in_array($parameterName, $this->defaultAcceptableParameters)) {
+            if ($parameterName === 'orderBy') {
+                $this->processOrderByParameter($parameterValue);
+            } else if (array_key_exists($parameterName, $acceptableParameters) || in_array($parameterName, $this->defaultAcceptableParameters)) {
                 $this->paramsAccepted[$parameterName] = $parameterValue;
             } else {
                 $this->paramsRejected[$parameterName] = $parameterValue;
             } 
         }
-        
+    }
+
+    protected function processOrderByParameter($parameterValue)
+    {
+        $orderByColumns = explode(',', $parameterValue);
+        foreach ($orderByColumns as $orderByColumn) {
+            if (str_contains($orderByColumn, '::')) {
+                $orderByColumnAndOrderIndicator = explode('::', $orderByColumn);
+                if (array_key_exists($orderByColumnAndOrderIndicator[0], $this->acceptableParameters)) {
+                    $this->paramsAccepted['orderBy'][$orderByColumnAndOrderIndicator[0]] = 'DESC';
+                } else {
+                    $this->paramsRejected['orderBy'][$orderByColumnAndOrderIndicator[0]] = 'Not acceptable order by parameter';
+                }
+            } else {
+                if (array_key_exists($orderByColumn, $this->acceptableParameters)) {
+                    $this->paramsAccepted['orderBy'][$orderByColumn] = 'ASC';
+                }
+            }
+        }
     }
 
     protected function isGetRequest(){
@@ -180,11 +200,6 @@ class GlobalAPIController extends Controller
         } else {
             return response()->json([$this->class::paginate($this->defaultPerPage)], 200);
         }
-
-        // $perPage = (int) $perPage = is_numeric(request()->perPage) ? request()->perPage : 15; // @ New
-        // $this->results = $this->mainClass::paginate($perPage)->appends([
-        //     'perPage' => $perPage // TODO: need to make dynamic, only included it if we use it
-        // ]); // @ New
     }
 
     protected function queryBuilder()
@@ -197,6 +212,7 @@ class GlobalAPIController extends Controller
         foreach ($this->paramsAccepted as $parameter => $value) {
             if (in_array($parameter, $this->defaultAcceptableParameters)) {
                 $this->processDefaultParameter($parameter, $value);
+                continue;
             }
             $this->currentParameter = [$parameter => $value];
             $this->currentParameterType = $this->determineParameterType($this->acceptableParameters[$parameter]['Type']); 
@@ -207,6 +223,7 @@ class GlobalAPIController extends Controller
             return $this->class::paginate($this->getPerPage());
         }
 
+        // fix orderby
         return $this->query->paginate($this->getPerPage())->appends($this->paramsAccepted);;
     }
 
@@ -215,28 +232,55 @@ class GlobalAPIController extends Controller
         if ($parameter === 'perPage') {
             $this->perPage = is_numeric(request()->perPage) ? (int) request()->perPage : $this->defaultPerPage;
         } elseif ($parameter === 'orderBy') {
-            $orderByColumns = explode(',', $value);
-            foreach ($orderByColumns as $orderByColumn) {
-                if (str_contains($orderByColumn, '::')) {
-                    $orderByColumnAndOrderIndicator = explode('::', $orderByColumn);
-                    if (array_key_exists($orderByColumnAndOrderIndicator[0], $acceptableParameters) {
-
-                    }
-                } else {
-                    if (array_key_exists($orderByColumn, $acceptableParameters) {
-
-                    }
+            foreach ($this->paramsAccepted['orderBy'] as $parameter => $orderByIndicator) {
+                if ($this->query) {
+                    $this->query->orderBy($parameter, $orderByIndicator);
+                } else{
+                    $this->query = $this->class::orderBy($parameter, $orderByIndicator);
                 }
             }
-            // orderBy('start_date')
-            // orderByDesc('start_date')
-            // inRandomOrder()
         }
         // $parameter === page is handed by Laravel
     }
 
+    protected function determineParameterType($parameterType)
+    {
+        if ($parameterType == 'date' || $parameterType == 'timestamp' || $parameterType == 'datetime' ||str_contains($parameterType, 'date')) {
+            return 'date';
+        } elseif (
+            str_contains($parameterType, 'varchar') || 
+            str_contains($parameterType, 'char') || 
+            $parameterType == 'blob' || 
+            $parameterType == 'text'
+        ) {
+            return 'string';
+        } elseif (
+            $parameterType == 'integer' ||
+            $parameterType == 'int' ||
+            $parameterType == 'smallint' ||
+            $parameterType == 'tinyint' ||
+            $parameterType == 'mediumint' ||
+            $parameterType == 'bigint'
+        ) {
+            return 'int';
+        } elseif (
+            $parameterType == 'decimal' ||
+            $parameterType == 'numeric' ||
+            $parameterType == 'float' ||
+            $parameterType == 'double'
+        ) {
+            return 'float';
+        } else {
+            foreach ($this->currentParameter as $parameter => $value) {
+                unset($this->paramsAccepted[$parameter]);
+                $this->paramsRejected[$parameter] = 'Column type is not supported in processor, contact the API administer!';
+            }
+            return false;
+        }
+    }
 
-    protected function determineParameterType()
+
+    protected function processParameter()
     {
        switch ($this->currentParameterType) {
            case 'date': $this->dateQueryBuilder(); break;
